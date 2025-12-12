@@ -1,0 +1,123 @@
+<div class="test-management-container">
+    <div class="header">
+      <h1>Test Management</h1>
+      <button class="btn-primary" (click)="openAddModal()">
+        <span class="icon">+</span> Add New Test
+      </button>
+    </div>
+  
+    <div class="tests-grid">
+      <div class="test-card" *ngFor="let test of tests">
+        <div class="test-header">
+          <h3>{{ test.name }}</h3>
+          <div class="test-actions">
+            <button class="btn-icon btn-edit" (click)="openEditModal(test)" title="Edit">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+            </button>
+            <button class="btn-icon btn-delete" (click)="deleteTest(test.id)" title="Delete">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <div class="test-details">
+          <div class="detail-row">
+            <span class="label">Department:</span>
+            <span class="value">{{ test.department }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">Price:</span>
+            <span class="value price">Rs. {{ test.price }}</span>
+          </div>
+          <div class="detail-row time-slots">
+            <span class="label">Available Slots:</span>
+            <div class="slots-container">
+              <span class="slot-badge" *ngFor="let slot of test.availableTimeSlots">
+                {{ slot }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Modal -->
+    <div class="modal-overlay" *ngIf="showAddModal" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>{{ editingTest ? 'Edit Test' : 'Add New Test' }}</h2>
+          <button class="btn-close" (click)="closeModal()">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Test Name *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="newTest.name" 
+              placeholder="e.g., Complete Blood Count"
+              class="form-input"
+            />
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>Department *</label>
+              <select [(ngModel)]="newTest.department" class="form-input">
+                <option value="" disabled selected>Select Department</option>
+                <option *ngFor="let dept of departments" [value]="dept.name">
+                  {{ dept.name }}
+                </option>
+              </select>
+            </div>
+            
+            
+            <div class="form-group">
+              <label>Price (Rs.) *</label>
+              <input 
+                type="number" 
+                [(ngModel)]="newTest.price" 
+                placeholder="0"
+                min="0"
+                class="form-input"
+              />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label>Available Time Slots</label>
+            <div class="time-slot-input">
+              <input 
+                type="text" 
+                [(ngModel)]="newTimeSlot" 
+                placeholder="e.g., Morning 8-11 AM"
+                class="form-input"
+                (keyup.enter)="addTimeSlot()"
+              />
+              <button class="btn-add-slot" (click)="addTimeSlot()">Add</button>
+            </div>
+            
+            <div class="selected-slots" *ngIf="newTest.availableTimeSlots.length > 0">
+              <div class="selected-slot" *ngFor="let slot of newTest.availableTimeSlots; let i = index">
+                <span>{{ slot }}</span>
+                <button class="btn-remove-slot" (click)="removeTimeSlot(i)">&times;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeModal()">Cancel</button>
+          <button class="btn-primary" (click)="saveTest()">
+            {{ editingTest ? 'Update Test' : 'Add Test' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>

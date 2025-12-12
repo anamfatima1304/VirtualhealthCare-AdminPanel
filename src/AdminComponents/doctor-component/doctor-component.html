@@ -1,0 +1,195 @@
+<div class="doctor-management-container">
+    <div class="header">
+      <h1>Doctor Management</h1>
+      <button class="btn-primary" (click)="openAddModal()">
+        <span class="icon">+</span> Add New Doctor
+      </button>
+    </div>
+  
+    <div class="doctors-table">
+      <div class="table-header">
+        <div class="col-name">Doctor Name</div>
+        <div class="col-specialty">Specialty</div>
+        <div class="col-username">Username</div>
+        <div class="col-password">Password</div>
+        <div class="col-actions">Actions</div>
+      </div>
+  
+      <div class="table-row" *ngFor="let doctor of doctors" (click)="openDetailsModal(doctor)">
+        <div class="col-name">
+          <div class="doctor-name-cell">
+            <div class="doctor-avatar" [style.background]="doctor.image ? 'url(' + doctor.image + ')' : 'linear-gradient(135deg, var(--color-light-blue), var(--color-sky-blue))'">
+              <span *ngIf="!doctor.image">{{ doctor.name.charAt(0) }}</span>
+            </div>
+            <span>{{ doctor.name }}</span>
+          </div>
+        </div>
+        <div class="col-specialty">
+          <span class="specialty-badge">{{ doctor.specialty }}</span>
+        </div>
+        <div class="col-username">
+          <div class="credential-cell">
+            <span>{{ doctor.username }}</span>
+            <button class="btn-copy" (click)="copyToClipboard(doctor.username); $event.stopPropagation()" title="Copy username">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="col-password">
+          <div class="credential-cell">
+            <span class="password-text">{{ doctor.password }}</span>
+            <button class="btn-copy" (click)="copyToClipboard(doctor.password); $event.stopPropagation()" title="Copy password">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="col-actions">
+          <button class="btn-delete-small" (click)="deleteDoctor(doctor.id, $event)" title="Delete">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Add Doctor Modal -->
+    <div class="modal-overlay" *ngIf="showAddModal" (click)="closeAddModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Add New Doctor</h2>
+          <button class="btn-close" (click)="closeAddModal()">&times;</button>
+        </div>
+  
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Doctor Name *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="newDoctor.name" 
+              placeholder="e.g., Dr. John Smith"
+              class="form-input"
+            />
+          </div>
+  
+          <div class="form-group">
+            <label>Username *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="newDoctor.username" 
+              placeholder="Enter username"
+              class="form-input"
+              autocomplete="off"
+            />
+          </div>
+  
+          <div class="form-group">
+            <label>Password *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="newDoctor.password" 
+              placeholder="Enter password"
+              class="form-input"
+              autocomplete="new-password"
+            />
+            <small class="form-hint">Password will be visible for communication purposes</small>
+          </div>
+  
+          <div class="info-note">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>Doctor will complete their profile (specialty, education, etc.) after first login</span>
+          </div>
+        </div>
+  
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeAddModal()">Cancel</button>
+          <button class="btn-primary" (click)="addDoctor()">Create Account</button>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Doctor Details Modal -->
+    <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Doctor Profile Details</h2>
+          <button class="btn-close" (click)="closeDetailsModal()">&times;</button>
+        </div>
+  
+        <div class="modal-body" *ngIf="selectedDoctor">
+          <div class="profile-header">
+            <div class="profile-avatar" [style.background]="selectedDoctor.image ? 'url(' + selectedDoctor.image + ')' : 'linear-gradient(135deg, var(--color-light-blue), var(--color-sky-blue))'">
+              <span *ngIf="!selectedDoctor.image">{{ selectedDoctor.name.charAt(0) }}</span>
+            </div>
+            <div class="profile-info">
+              <h3>{{ selectedDoctor.name }}</h3>
+              <p class="profile-specialty">{{ selectedDoctor.specialty }}</p>
+            </div>
+          </div>
+  
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="detail-label">Experience</span>
+              <span class="detail-value">{{ selectedDoctor.experience }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Education</span>
+              <span class="detail-value">{{ selectedDoctor.education }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Consultation Fee</span>
+              <span class="detail-value">{{ selectedDoctor.consultationFee }}</span>
+            </div>
+          </div>
+  
+          <div class="detail-section">
+            <span class="detail-label">Short Bio</span>
+            <p class="bio-text">{{ selectedDoctor.shortBio }}</p>
+          </div>
+  
+          <div class="detail-section">
+            <span class="detail-label">Available Days</span>
+            <div class="days-container">
+              <span class="day-chip" *ngFor="let day of selectedDoctor.availableDays">{{ day }}</span>
+              <span class="no-data" *ngIf="selectedDoctor.availableDays.length === 0">Not set yet</span>
+            </div>
+          </div>
+  
+          <div class="credentials-section">
+            <h4>Login Credentials</h4>
+            <div class="credential-row">
+              <span class="cred-label">Username:</span>
+              <span class="cred-value">{{ selectedDoctor.username }}</span>
+            </div>
+            <div class="credential-row">
+              <span class="cred-label">Password:</span>
+              <span class="cred-value">{{ selectedDoctor.password }}</span>
+            </div>
+          </div>
+  
+          <div class="readonly-notice">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span>Profile information is managed by the doctor and cannot be edited by admin</span>
+          </div>
+        </div>
+  
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeDetailsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
