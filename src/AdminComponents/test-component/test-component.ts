@@ -17,6 +17,13 @@ export class TestManagementComponent implements OnInit {
   tests: HealthTest[] = [];
   showAddModal = false;
   editingTest: HealthTest | null = null;
+  isLoading = false;
+  errorMessage = '';
+  
+  // Notification system
+  showNotification = false;
+  notificationMessage = '';
+  notificationType: 'success' | 'error' = 'success';
   
   departments: Department[] = [];
   
@@ -30,7 +37,10 @@ export class TestManagementComponent implements OnInit {
   
   newTimeSlot = '';
   
-  constructor(private healthcareTestService: HealthcareTest, private departmentService: DepartmentService) {}
+  constructor(
+    private healthcareTestService: HealthcareTest, 
+    private departmentService: DepartmentService
+  ) {}
   
   ngOnInit() {
     this.loadDepartments();
@@ -38,11 +48,35 @@ export class TestManagementComponent implements OnInit {
   }
   
   loadDepartments() {
-    this.departments = this.departmentService.departments;
+    // Fetch departments from API
+    this.departmentService.getAllDepartments().subscribe({
+      next: (data) => {
+        this.departments = data;
+      },
+      error: (error) => {
+        console.error('Error loading departments:', error);
+        // Fallback to local data if API fails
+        this.departments = this.departmentService.departments;
+      }
+    });
   }
   
   loadTests() {
-    this.tests = this.healthcareTestService.healthcareTests;
+    this.isLoading = true;
+    this.errorMessage = '';
+    
+    // Fetch tests from API
+    this.healthcareTestService.getAllTests().subscribe({
+      next: (data) => {
+        this.tests = data;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading tests:', error);
+        this.errorMessage = 'Failed to load tests. Please try again.';
+        this.isLoading = false;
+      }
+    });
   }
   
   openAddModal() {
@@ -86,32 +120,78 @@ export class TestManagementComponent implements OnInit {
   
   saveTest() {
     if (!this.newTest.name || !this.newTest.department || this.newTest.price <= 0) {
-      alert('Please fill in all required fields');
+      this.displayNotification('Please fill in all required fields', 'error');
       return;
     }
     
-    if (this.editingTest) {
-      // Update existing test
-      const index = this.tests.findIndex(t => t.id === this.editingTest!.id);
-      if (index !== -1) {
-        this.tests[index] = { ...this.newTest, id: this.editingTest.id };
-      }
-    } else {
-      // Add new test
-      const maxId = this.tests.length > 0 ? Math.max(...this.tests.map(t => t.id)) : 0;
-      this.newTest.id = maxId + 1;
-      this.tests.push({ ...this.newTest });
+    if (this.newTest.availableTimeSlots.length === 0) {
+      this.displayNotification('Please add at least one time slot', 'error');
+      return;
     }
     
-    this.closeModal();
+    this.isLoading = true;
+    
+    if (this.editingTest) {
+      // Update existing test via API
+      this.healthcareTestService.updateTest(this.editingTest.id, this.newTest).subscribe({
+        next: (updatedTest) => {
+          this.loadTests();
+          this.closeModal();
+          this.displayNotification('Test updated successfully!', 'success');
+        },
+        error: (error) => {
+          console.error('Error updating test:', error);
+          this.displayNotification('Failed to update test. Please try again.', 'error');
+          this.isLoading = false;
+        }
+      });
+    } else {
+      // Create new test via API
+      const maxId = this.tests.length > 0 ? Math.max(...this.tests.map(t => t.id)) : 0;
+      this.newTest.id = maxId + 1;
+      
+      this.healthcareTestService.createTest(this.newTest).subscribe({
+        next: (createdTest) => {
+          this.loadTests();
+          this.closeModal();
+          this.displayNotification('Test added successfully!', 'success');
+        },
+        error: (error) => {
+          console.error('Error creating test:', error);
+          this.displayNotification('Failed to add test. Please try again.', 'error');
+          this.isLoading = false;
+        }
+      });
+    }
   }
   
   deleteTest(id: number) {
-    if (confirm('Are you sure you want to delete this test?')) {
-      const index = this.tests.findIndex(t => t.id === id);
-      if (index !== -1) {
-        this.tests.splice(index, 1);
-      }
+    if (confirm('Are you sure you want to delete this test? This action cannot be undone.')) {
+      this.isLoading = true;
+      
+      this.healthcareTestService.deleteTest(id).subscribe({
+        next: () => {
+          this.loadTests();
+          this.displayNotification('Test deleted successfully!', 'success');
+        },
+        error: (error) => {
+          console.error('Error deleting test:', error);
+          this.displayNotification('Failed to delete test. Please try again.', 'error');
+          this.isLoading = false;
+        }
+      });
     }
+  }
+  
+  // Display notification helper
+  displayNotification(message: string, type: 'success' | 'error') {
+    this.notificationMessage = message;
+    this.notificationType = type;
+    this.showNotification = true;
+    
+    // Auto-hide notification after 3 seconds
+    setTimeout(() => {
+      this.showNotification = false;
+    }, 3000);
   }
 }

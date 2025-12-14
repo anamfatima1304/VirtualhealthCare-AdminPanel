@@ -21,6 +21,7 @@
   margin: 0;
 }
 
+
 /* Buttons */
 .btn-primary {
   background: linear-gradient(135deg, var(--color-medium-blue) 0%, var(--color-navy-blue) 100%);

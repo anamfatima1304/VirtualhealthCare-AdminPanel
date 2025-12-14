@@ -1,11 +1,20 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Department } from '../Interfaces/Department.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DepartmentService {
-  departments: Department[] = [
+  private apiUrl = 'http://localhost:3000/api/departments';
+
+  constructor(private http: HttpClient) {}
+
+  // Add this getter back to your service
+get departments(): Department[] {
+  return [
     {
       id: 1,
       name: 'Cardiologist',
@@ -53,14 +62,31 @@ export class DepartmentService {
       icon: 'fas fa-user-md',
       services: ['Appendectomy', 'Gallbladder Surgery', 'Hernia Repair', 'Emergency Surgery', 'Minimally Invasive Surgery'],
       specialists: 1
-    },
-    {
-      id: 7,
-      name: 'Just Another Department',
-      description: 'Expert surgical care including minimally invasive procedures, emergency surgeries, and comprehensive operative management.',
-      icon: 'fas fa-user-md',
-      services: ['Appendectomy', 'Gallbladder Surgery', 'Hernia Repair', 'Emergency Surgery', 'Minimally Invasive Surgery'],
-      specialists: 1
     }
   ];
+}
+
+  getAllDepartments(): Observable<Department[]> {
+    return this.http.get<{ success: boolean; data: Department[] }>(this.apiUrl)
+      .pipe(map((response: { data: any; }) => response.data));
+  }
+
+  getDepartmentById(id: number): Observable<Department> {
+    return this.http.get<{ success: boolean; data: Department }>(`${this.apiUrl}/${id}`)
+      .pipe(map((response: { data: any; }) => response.data));
+  }
+
+  createDepartment(department: Department): Observable<Department> {
+    return this.http.post<{ success: boolean; data: Department }>(this.apiUrl, department)
+      .pipe(map((response: { data: any; }) => response.data));
+  }
+
+  updateDepartment(id: number, department: Department): Observable<Department> {
+    return this.http.put<{ success: boolean; data: Department }>(`${this.apiUrl}/${id}`, department)
+      .pipe(map((response: { data: any; }) => response.data));
+  }
+
+  deleteDepartment(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 }

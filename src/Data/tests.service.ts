@@ -1,11 +1,17 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { HealthTest } from '../Interfaces/Tests.interface';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HealthcareTest {
-  healthcareTests: HealthTest[] = [
+  private apiUrl = 'http://localhost:3000/api/health-tests';
+  
+  // Keep local data as fallback
+  private localTests: HealthTest[] = [
     {
       id: 1,
       name: 'Complete Blood Count (CBC)',
@@ -63,4 +69,68 @@ export class HealthcareTest {
       availableTimeSlots: ['Morning 8-12 PM', 'Afternoon 1-5 PM']
     }
   ];
+
+  constructor(private http: HttpClient) {}
+
+  // Get local tests synchronously (for backward compatibility)
+  get healthcareTests(): HealthTest[] {
+    return this.localTests;
+  }
+
+  // Get all tests from API (with local fallback)
+  getAllTests(): Observable<HealthTest[]> {
+    return this.http.get<{ success: boolean; data: HealthTest[] }>(this.apiUrl)
+      .pipe(
+        map((response: { data: any; }) => response.data),
+        catchError((error: any) => {
+          console.warn('API not available, using local data', error);
+          return of(this.localTests);
+        })
+      );
+  }
+
+  // Get test by ID
+  getTestById(id: number): Observable<HealthTest> {
+    return this.http.get<{ success: boolean; data: HealthTest }>(`${this.apiUrl}/${id}`)
+      .pipe(
+        map((response: { data: any; }) => response.data),
+        catchError((error: any) => {
+          console.warn('API not available, using local data', error);
+          const test = this.localTests.find(t => t.id === id);
+          return of(test!);
+        })
+      );
+  }
+
+  // Get tests by department
+  getTestsByDepartment(department: string): Observable<HealthTest[]> {
+    return this.http.get<{ success: boolean; data: HealthTest[] }>(`${this.apiUrl}/department/${department}`)
+      .pipe(
+        map((response: { data: any; }) => response.data),
+        catchError((error: any) => {
+          console.warn('API not available, using local data', error);
+          const tests = this.localTests.filter(t => 
+            t.department.toLowerCase() === department.toLowerCase()
+          );
+          return of(tests);
+        })
+      );
+  }
+
+  // Create new test
+  createTest(test: HealthTest): Observable<HealthTest> {
+    return this.http.post<{ success: boolean; data: HealthTest }>(this.apiUrl, test)
+      .pipe(map((response: { data: any; }) => response.data));
+  }
+
+  // Update test
+  updateTest(id: number, test: HealthTest): Observable<HealthTest> {
+    return this.http.put<{ success: boolean; data: HealthTest }>(`${this.apiUrl}/${id}`, test)
+      .pipe(map((response: { data: any; }) => response.data));
+  }
+
+  // Delete test
+  deleteTest(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
 }
