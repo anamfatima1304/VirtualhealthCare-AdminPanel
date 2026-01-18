@@ -1,10 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject, ChangeDetectorRef } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, NavigationEnd } from '@angular/router';
 import { HealthcareTest } from '../../Data/tests.service';
 import { HealthTest } from '../../Interfaces/Tests.interface';
 import { Department } from '../../Interfaces/Department.interface';
 import { DepartmentService } from '../../Data/departments.service';
+import { Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-test-management',
@@ -13,7 +16,10 @@ import { DepartmentService } from '../../Data/departments.service';
   templateUrl: './test-component.html',
   styleUrls: ['./test-component.css']
 })
-export class TestManagementComponent implements OnInit {
+export class TestManagementComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private isBrowser: boolean;
+  
   tests: HealthTest[] = [];
   showAddModal = false;
   editingTest: HealthTest | null = null;
@@ -39,12 +45,41 @@ export class TestManagementComponent implements OnInit {
   
   constructor(
     private healthcareTestService: HealthcareTest, 
-    private departmentService: DepartmentService
-  ) {}
+    private departmentService: DepartmentService,
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+    
+    // Only subscribe to router events in the browser
+    if (this.isBrowser) {
+      this.router.events
+        .pipe(
+          filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+          takeUntil(this.destroy$)
+        )
+        .subscribe((event) => {
+          if (event.url.includes('/admin/tests')) {
+            this.loadDepartments();
+            this.loadTests();
+          }
+        });
+    }
+  }
   
   ngOnInit() {
-    this.loadDepartments();
-    this.loadTests();
+    if (this.isBrowser) {
+      setTimeout(() => {
+        this.loadDepartments();
+        this.loadTests();
+      }, 0);
+    }
+  }
+  
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
   
   loadDepartments() {
@@ -52,11 +87,13 @@ export class TestManagementComponent implements OnInit {
     this.departmentService.getAllDepartments().subscribe({
       next: (data) => {
         this.departments = data;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading departments:', error);
         // Fallback to local data if API fails
         this.departments = this.departmentService.departments;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -70,11 +107,13 @@ export class TestManagementComponent implements OnInit {
       next: (data) => {
         this.tests = data;
         this.isLoading = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error loading tests:', error);
         this.errorMessage = 'Failed to load tests. Please try again.';
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

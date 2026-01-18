@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject, ChangeDetectorRef } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, NavigationEnd } from '@angular/router';
 import { DepartmentService } from '../../Data/departments.service';
 import { DoctorsService } from '../../Data/doctors.service';
 import { Department } from '../../Interfaces/Department.interface';
 import { Doctor } from '../../Interfaces/Doctor.interface';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-department-component',
@@ -13,7 +15,10 @@ import { forkJoin } from 'rxjs';
   templateUrl: './department-component.html',
   styleUrls: ['./department-component.css'],
 })
-export class DepartmentComponent implements OnInit {
+export class DepartmentComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
+  private isBrowser: boolean;
+  
   departments: Department[] = [];
   doctors: Doctor[] = [];
   showModal = false;
@@ -39,14 +44,47 @@ export class DepartmentComponent implements OnInit {
 
   constructor(
     private departmentService: DepartmentService,
-    private doctorsService: DoctorsService
-  ) {}
+    private doctorsService: DoctorsService,
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+    
+    // Only subscribe to router events in the browser
+    if (this.isBrowser) {
+      this.router.events
+        .pipe(
+          filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+          takeUntil(this.destroy$)
+        )
+        .subscribe((event) => {
+          console.log('Navigation detected:', event.url);
+          if (event.url.includes('/admin/departments')) {
+            console.log('Reloading departments data...');
+            this.loadData();
+          }
+        });
+    }
+  }
 
   ngOnInit() {
-    this.loadData();
+    console.log('ngOnInit called, isBrowser:', this.isBrowser);
+    if (this.isBrowser) {
+      // Add a small delay to ensure the component is fully initialized
+      setTimeout(() => {
+        this.loadData();
+      }, 0);
+    }
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadData() {
+    console.log('loadData called');
     this.isLoading = true;
     this.errorMessage = '';
 
@@ -56,6 +94,10 @@ export class DepartmentComponent implements OnInit {
       doctors: this.doctorsService.getAllDoctors()
     }).subscribe({
       next: (data) => {
+        console.log('Data loaded:', data);
+        console.log('Departments count:', data.departments.length);
+        console.log('Doctors count:', data.doctors.length);
+        
         this.departments = data.departments;
         this.doctors = data.doctors;
         
@@ -65,11 +107,18 @@ export class DepartmentComponent implements OnInit {
         });
         
         this.isLoading = false;
+        
+        // Force change detection
+        this.cdr.detectChanges();
+        
+        console.log('After assignment - departments:', this.departments);
+        console.log('After assignment - doctors:', this.doctors);
       },
       error: (error) => {
         console.error('Error loading data:', error);
         this.errorMessage = 'Failed to load data. Please try again.';
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }

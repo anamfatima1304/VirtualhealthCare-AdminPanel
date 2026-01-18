@@ -1,0 +1,72 @@
+<div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-header">
+        <i class="fas fa-user-shield admin-icon"></i>
+        <h2 class="title">Admin Login</h2>
+        <p class="subtitle">Sign in to access the admin dashboard</p>
+      </div>
+  
+      <!-- Error Message -->
+      <div class="error-box" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ errorMessage }}
+      </div>
+  
+      <!-- Success Message -->
+      <div class="success-box" *ngIf="successMessage">
+        <i class="fas fa-check-circle"></i>
+        {{ successMessage }}
+      </div>
+  
+      <form (ngSubmit)="onLogin()">
+        <!-- Email -->
+        <div class="input-group">
+          <label>Email Address</label>
+          <div class="input-with-icon">
+            <i class="fas fa-envelope input-icon"></i>
+            <input
+              type="email"
+              [(ngModel)]="loginData.email"
+              name="email"
+              placeholder="Enter your admin email"
+              required
+              [disabled]="loading"
+            />
+          </div>
+        </div>
+  
+        <!-- Password -->
+        <div class="input-group">
+          <label>Password</label>
+          <div class="input-with-icon">
+            <i class="fas fa-lock input-icon"></i>
+            <input
+              type="password"
+              [(ngModel)]="loginData.password"
+              name="password"
+              placeholder="Enter your password"
+              required
+              [disabled]="loading"
+            />
+          </div>
+        </div>
+  
+        <!-- Submit Button -->
+        <button class="login-btn" type="submit" [disabled]="loading">
+          <span *ngIf="!loading">
+            <i class="fas fa-sign-in-alt"></i> Sign In
+          </span>
+          <span *ngIf="loading">
+            <i class="fas fa-spinner fa-spin"></i> Signing In...
+          </span>
+        </button>
+      </form>
+  
+      <div class="login-footer">
+        <p class="info-text">
+          <i class="fas fa-info-circle"></i>
+          Admin access only. Unauthorized access is prohibited.
+        </p>
+      </div>
+    </div>
+  </div>

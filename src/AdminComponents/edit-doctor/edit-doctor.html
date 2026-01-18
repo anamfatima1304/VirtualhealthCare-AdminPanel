@@ -1,0 +1,273 @@
+<div class="edit-doctor-container">
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="loading">
+      <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Loading doctor details...</p>
+      </div>
+    </div>
+  
+    <div *ngIf="!loading && doctor">
+      <!-- Header Section -->
+      <div class="page-header">
+        <button class="back-btn" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i>
+          Back to Doctors
+        </button>
+        <h1 class="page-title">
+          <i class="fas fa-user-edit"></i>
+          Edit Doctor Profile
+        </h1>
+      </div>
+  
+      <!-- Success/Error Messages -->
+      <div class="message success-message" *ngIf="successMessage">
+        <i class="fas fa-check-circle"></i>
+        {{ successMessage }}
+      </div>
+      <div class="message error-message" *ngIf="errorMessage">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ errorMessage }}
+      </div>
+  
+      <div class="content-grid">
+        <!-- Edit Form Section -->
+        <div class="edit-section">
+          <div class="section-card">
+            <h2 class="section-title">
+              <i class="fas fa-user-circle"></i>
+              Basic Information
+            </h2>
+            
+            <form (ngSubmit)="updateDoctor()">
+              <!-- Name -->
+              <div class="form-group">
+                <label for="name">
+                  <i class="fas fa-user"></i>
+                  Doctor Name
+                  <span class="required">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  [(ngModel)]="editForm.name"
+                  name="name"
+                  placeholder="Enter doctor name"
+                  required
+                >
+              </div>
+  
+              <!-- Specialty -->
+              <div class="form-group">
+                <label for="specialty">
+                  <i class="fas fa-stethoscope"></i>
+                  Specialty
+                  <span class="read-only-label">(Auto-assigned from department)</span>
+                </label>
+                <input
+                  type="text"
+                  id="specialty"
+                  [(ngModel)]="editForm.specialty"
+                  name="specialty"
+                  placeholder="Enter specialty"
+                  readonly
+                  class="readonly-input"
+                >
+              </div>
+  
+              <!-- Department -->
+              <div class="form-group">
+                <label for="department">
+                  <i class="fas fa-hospital"></i>
+                  Department
+                </label>
+                <select
+                  id="department"
+                  [(ngModel)]="editForm.departmentId"
+                  name="department"
+                >
+                  <option [value]="null">Select Department</option>
+                  <option *ngFor="let dept of departments" [value]="dept.id">
+                    {{ dept.name }}
+                  </option>
+                </select>
+              </div>
+  
+              <!-- Experience -->
+              <div class="form-group">
+                <label for="experience">
+                  <i class="fas fa-award"></i>
+                  Experience
+                </label>
+                <input
+                  type="text"
+                  id="experience"
+                  [(ngModel)]="editForm.experience"
+                  name="experience"
+                  placeholder="e.g., 15 years"
+                >
+              </div>
+  
+              <!-- Education -->
+              <div class="form-group">
+                <label for="education">
+                  <i class="fas fa-graduation-cap"></i>
+                  Education
+                </label>
+                <input
+                  type="text"
+                  id="education"
+                  [(ngModel)]="editForm.education"
+                  name="education"
+                  placeholder="e.g., MD, Harvard Medical School"
+                >
+              </div>
+  
+              <!-- Consultation Fee -->
+              <div class="form-group">
+                <label for="consultationFee">
+                  <i class="fas fa-money-bill-wave"></i>
+                  Consultation Fee
+                </label>
+                <input
+                  type="text"
+                  id="consultationFee"
+                  [(ngModel)]="editForm.consultationFee"
+                  name="consultationFee"
+                  placeholder="e.g., Rs. 200"
+                >
+              </div>
+  
+              <!-- Image Upload -->
+              <div class="form-group">
+                <label for="image">
+                  <i class="fas fa-image"></i>
+                  Profile Image
+                </label>
+                
+                <!-- Current/Preview Image -->
+                <div class="image-preview-container" *ngIf="editForm.image && editForm.image !== 'placeholder'">
+                  <img [src]="editForm.image" alt="Preview" class="preview-image">
+                  <button type="button" class="btn-remove-image" (click)="removeImage()">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+  
+                <!-- No Image Placeholder -->
+                <div class="image-placeholder" *ngIf="!editForm.image || editForm.image === 'placeholder'">
+                  <i class="fas fa-user-md"></i>
+                  <p>No image uploaded</p>
+                </div>
+  
+                <!-- Upload Button -->
+                <div class="upload-controls">
+                  <input 
+                    type="file" 
+                    id="imageUpload" 
+                    accept="image/*" 
+                    (change)="onImageFileSelected($event)"
+                    style="display: none;"
+                  >
+                  <label for="imageUpload" class="btn-upload">
+                    <i class="fas fa-upload" *ngIf="!uploadingImage"></i>
+                    <i class="fas fa-spinner fa-spin" *ngIf="uploadingImage"></i>
+                    {{ uploadingImage ? 'Uploading...' : 'Upload Image' }}
+                  </label>
+                  <span class="upload-hint">Or enter image URL below</span>
+                </div>
+  
+                <!-- Manual URL Input -->
+                <input
+                  type="url"
+                  id="imageUrl"
+                  [(ngModel)]="editForm.image"
+                  name="image"
+                  placeholder="Or paste image URL here"
+                  class="image-url-input"
+                >
+              </div>
+  
+              <!-- Short Bio -->
+              <div class="form-group">
+                <label for="shortBio">
+                  <i class="fas fa-align-left"></i>
+                  Short Bio
+                </label>
+                <textarea
+                  id="shortBio"
+                  [(ngModel)]="editForm.shortBio"
+                  name="shortBio"
+                  rows="4"
+                  placeholder="Enter a brief description about the doctor"
+                ></textarea>
+              </div>
+  
+              <!-- Submit Button -->
+              <div class="form-actions">
+                <button type="button" class="btn-cancel" (click)="goBack()">
+                  <i class="fas fa-times"></i>
+                  Cancel
+                </button>
+                <button type="submit" class="btn-save" [disabled]="saving">
+                  <i class="fas fa-save" *ngIf="!saving"></i>
+                  <i class="fas fa-spinner fa-spin" *ngIf="saving"></i>
+                  {{ saving ? 'Saving...' : 'Save Changes' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+  
+        <!-- Time Slots Section (Read-Only) -->
+        <div class="timeslots-section">
+          <div class="section-card">
+            <h2 class="section-title">
+              <i class="fas fa-clock"></i>
+              Available Time Slots
+              <span class="read-only-badge">Read Only</span>
+            </h2>
+            <p class="section-note">
+              <i class="fas fa-info-circle"></i>
+              Time slots are managed by the doctor and cannot be edited by admin.
+            </p>
+  
+            <div class="schedule-list">
+              <div 
+                *ngFor="let day of weekDays" 
+                class="schedule-item"
+                [class.unavailable]="!isDayAvailable(day)"
+              >
+                <div class="day-label">{{ day }}</div>
+                <div class="timing-info">
+                  <div *ngIf="isDayAvailable(day)" class="available-times">
+                    <span 
+                      *ngFor="let timeSlot of getTimeSlotsForDay(day)" 
+                      class="time-slot"
+                    >
+                      {{ timeSlot.display }}
+                    </span>
+                  </div>
+                  <div *ngIf="!isDayAvailable(day)" class="unavailable-text">
+                    Not Available
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Error State -->
+    <div class="error-state" *ngIf="!loading && !doctor">
+      <div class="error-content">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Doctor Not Found</h3>
+        <p>The requested doctor profile could not be found.</p>
+        <button class="btn-back" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i>
+          Back to Doctors
+        </button>
+      </div>
+    </div>
+  </div>

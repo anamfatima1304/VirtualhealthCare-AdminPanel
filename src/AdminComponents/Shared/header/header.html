@@ -1,0 +1,87 @@
+<header class="header">
+    <div class="header-container">
+      <!-- Logo -->
+      <div class="logo">
+        <h2>Admin Panel</h2>
+      </div>
+  
+      <!-- Desktop Navigation -->
+      <nav class="nav-desktop">
+        <ul class="nav-links">
+          <li>
+            <a routerLink="/admin/dashboard" 
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{exact: true}"
+               class="nav-link">Home</a>
+          </li>
+          <li>
+            <a routerLink="/admin/doctors" 
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{exact: true}"
+               class="nav-link">Doctors</a>
+          </li>
+          <li>
+            <a routerLink="/admin/tests" 
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{exact: true}"
+               class="nav-link">Test Services</a>
+          </li>
+          <li>
+            <a routerLink="/admin/departments" 
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{exact: true}"
+               class="nav-link">Departments</a>
+          </li>
+        </ul>
+      </nav>
+  
+      <!-- Logout Button -->
+      <div class="auth-buttons">
+        <button class="btn btn-logout" (click)="logout()">Logout</button>
+      </div>
+  
+      <!-- Mobile Menu Button -->
+      <button class="mobile-menu-btn" (click)="toggleMenu()">
+        <span class="hamburger"></span>
+      </button>
+    </div>
+  
+    <!-- Mobile Navigation -->
+    <nav class="nav-mobile" [class.active]="isMenuOpen">
+      <ul class="nav-links-mobile">
+        <li>
+          <a routerLink="/admin/dashboard" 
+             routerLinkActive="active"
+             [routerLinkActiveOptions]="{exact: true}"
+             class="nav-link-mobile"
+             (click)="closeMenu()">Home</a>
+        </li>
+        <li>
+          <a routerLink="/admin/doctors" 
+             routerLinkActive="active"
+             [routerLinkActiveOptions]="{exact: true}"
+             class="nav-link-mobile"
+             (click)="closeMenu()">Doctors</a>
+        </li>
+        <li>
+          <a routerLink="/admin/tests" 
+             routerLinkActive="active"
+             [routerLinkActiveOptions]="{exact: true}"
+             class="nav-link-mobile"
+             (click)="closeMenu()">Test Services</a>
+        </li>
+        <li>
+          <a routerLink="/admin/departments" 
+             routerLinkActive="active"
+             [routerLinkActiveOptions]="{exact: true}"
+             class="nav-link-mobile"
+             (click)="closeMenu()">Departments</a>
+          </li>
+      </ul>
+  
+      <!-- Mobile Logout Button -->
+      <div class="mobile-auth">
+        <button class="btn btn-logout" (click)="logout()">Logout</button>
+      </div>
+    </nav>
+  </header>
