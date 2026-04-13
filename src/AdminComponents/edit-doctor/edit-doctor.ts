@@ -6,6 +6,8 @@ import { Doctor } from '../../Interfaces/Doctor.interface';
 import { DepartmentService } from '../../Data/departments.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { retry, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-edit-doctor',
@@ -13,7 +15,6 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './edit-doctor.html',
   styleUrls: ['./edit-doctor.css']
 })
-
 export class EditDoctorComponent implements OnInit {
   doctorId!: number;
   doctor: Doctor | null = null;
@@ -21,12 +22,11 @@ export class EditDoctorComponent implements OnInit {
   loading = false;
   saving = false;
   uploadingImage = false;
-  
+
   weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  
+
   editForm = {
     name: '',
-    specialty: '',
     departmentId: null as number | null,
     experience: '',
     education: '',
@@ -34,7 +34,7 @@ export class EditDoctorComponent implements OnInit {
     shortBio: '',
     consultationFee: ''
   };
-  
+
   errorMessage = '';
   successMessage = '';
 
@@ -42,61 +42,72 @@ export class EditDoctorComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private doctorsService: DoctorsService,
-    private departmentService: DepartmentService
+    private departmentService: DepartmentService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    console.log('EditDoctorComponent initialized - CLEAN VERSION');
-    this.route.params.subscribe(params => {
-      this.doctorId = +params['id'];
-      console.log('Doctor ID:', this.doctorId);
-      if (this.doctorId) {
-        this.loadDoctor();
-        this.loadDepartments();
+    this.doctorId = +this.route.snapshot.params['id'];
+
+    if (this.doctorId) {
+      // Load departments first, then doctor — so dropdown options exist
+      // before we try to pre-select one
+      this.loadDepartments(() => this.loadDoctor());
+    } else {
+      this.showError('Invalid doctor ID');
+    }
+  }
+
+  loadDepartments(onComplete?: () => void): void {
+    this.departmentService.getAllDepartments().subscribe({
+      next: (data) => {
+        this.departments = data || [];
+        this.cdr.detectChanges();
+        if (onComplete) onComplete(); // load doctor after departments are ready
+      },
+      error: (err) => {
+        console.error('Error loading departments:', err);
+        if (onComplete) onComplete(); // still try to load doctor
       }
     });
   }
 
   loadDoctor(): void {
-    console.log('Loading doctor...');
     this.loading = true;
     this.doctor = null;
-    
-    this.doctorsService.getDoctorById(this.doctorId).subscribe({
-      next: (data) => {
-        console.log('SUCCESS - Doctor loaded:', data);
-        this.doctor = data;
-        this.populateForm();
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('ERROR loading doctor:', err);
-        this.showError('Failed to load doctor');
-        this.loading = false;
-      }
-    });
-  }
 
-  loadDepartments(): void {
-    this.departmentService.getAllDepartments().subscribe({
-      next: (data) => {
-        this.departments = data || [];
-      },
-      error: (err) => {
-        console.error('Error loading departments:', err);
-      }
-    });
+    this.doctorsService.getDoctorById(this.doctorId)
+      .pipe(
+        retry(2),
+        catchError(err => {
+          console.error('Failed to load doctor after retries:', err);
+          return of(null);
+        })
+      )
+      .subscribe(data => {
+        if (data) {
+          this.doctor = data;
+          this.populateForm();
+        } else {
+          this.showError('Failed to load doctor. Please go back and try again.');
+        }
+        this.loading = false;
+        this.cdr.detectChanges();
+      });
   }
 
   populateForm(): void {
     if (!this.doctor) return;
-    
-    const deptId = (this.doctor as any).departmentId;
-    
+
+    // Doctor has no departmentId — match department by specialty name instead
+    const matchedDept = this.departments.find(
+      d => d.name.toLowerCase() === this.doctor!.specialty?.toLowerCase()
+    );
+    const departmentId = matchedDept ? matchedDept.id : null;
+
     this.editForm = {
       name: this.doctor.name || '',
-      specialty: this.doctor.specialty || '',
-      departmentId: typeof deptId === 'string' ? parseInt(deptId) : deptId,
+      departmentId,
       experience: this.doctor.experience || '',
       education: this.doctor.education || '',
       image: this.doctor.image || '',
@@ -106,8 +117,8 @@ export class EditDoctorComponent implements OnInit {
   }
 
   updateDoctor(): void {
-    if (!this.editForm.name || !this.editForm.specialty) {
-      this.showError('Name and specialty are required');
+    if (!this.editForm.name) {
+      this.showError('Doctor name is required');
       return;
     }
 
@@ -116,7 +127,6 @@ export class EditDoctorComponent implements OnInit {
     const updated: any = {
       ...this.doctor,
       name: this.editForm.name,
-      specialty: this.editForm.specialty,
       departmentId: this.editForm.departmentId,
       experience: this.editForm.experience,
       education: this.editForm.education,
@@ -173,10 +183,12 @@ export class EditDoctorComponent implements OnInit {
       this.editForm.image = e.target.result;
       this.uploadingImage = false;
       this.showSuccess('Image uploaded successfully!');
+      this.cdr.detectChanges();
     };
     reader.onerror = () => {
-      this.showError('Failed to read image file');
       this.uploadingImage = false;
+      this.showError('Failed to read image file');
+      this.cdr.detectChanges();
     };
     reader.readAsDataURL(file);
   }
@@ -188,12 +200,18 @@ export class EditDoctorComponent implements OnInit {
   showError(message: string): void {
     this.errorMessage = message;
     this.successMessage = '';
-    setTimeout(() => this.errorMessage = '', 5000);
+    setTimeout(() => {
+      this.errorMessage = '';
+      this.cdr.detectChanges();
+    }, 5000);
   }
 
   showSuccess(message: string): void {
     this.successMessage = message;
     this.errorMessage = '';
-    setTimeout(() => this.successMessage = '', 5000);
+    setTimeout(() => {
+      this.successMessage = '';
+      this.cdr.detectChanges();
+    }, 5000);
   }
 }

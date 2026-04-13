@@ -81,16 +81,16 @@ export class AdminDoctorsComponent implements OnInit {
   }
 
   loadAllCredentials(): void {
-    // Load credentials for all doctors
     this.doctors.forEach(doctor => {
       this.credentialsService.getCredentialsByDoctorId(doctor.id).subscribe({
         next: (credential) => {
           this.doctorCredentials.set(doctor.id, credential);
+          this.cdr.detectChanges(); // ← force UI update after each credential loads
         },
         error: (err) => {
           console.error(`Error loading credentials for doctor ${doctor.id}:`, err);
-          // Set a placeholder if credentials can't be loaded
           this.doctorCredentials.set(doctor.id, { username: 'N/A' });
+          this.cdr.detectChanges();
         }
       });
     });
