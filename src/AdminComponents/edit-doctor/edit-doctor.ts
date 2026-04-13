@@ -194,7 +194,7 @@ export class EditDoctorComponent implements OnInit {
   }
 
   removeImage(): void {
-    this.editForm.image = 'placeholder';
+    this.editForm.image = 'Enter Image URL HERE';
   }
 
   showError(message: string): void {
