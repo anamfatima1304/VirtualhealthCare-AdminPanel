@@ -32,6 +32,12 @@
                [routerLinkActiveOptions]="{exact: true}"
                class="nav-link">Departments</a>
           </li>
+          <li>
+            <a routerLink="/admin/analytics" 
+               routerLinkActive="active"
+               [routerLinkActiveOptions]="{exact: true}"
+               class="nav-link">Analytics</a>
+          </li>
         </ul>
       </nav>
   
@@ -76,7 +82,14 @@
              [routerLinkActiveOptions]="{exact: true}"
              class="nav-link-mobile"
              (click)="closeMenu()">Departments</a>
-          </li>
+        </li>
+        <li>
+          <a routerLink="/admin/analytics" 
+             routerLinkActive="active"
+             [routerLinkActiveOptions]="{exact: true}"
+             class="nav-link-mobile"
+             (click)="closeMenu()">Analytics</a>
+        </li>
       </ul>
   
       <!-- Mobile Logout Button -->

@@ -6,6 +6,7 @@ import { AdminDashboardComponent } from '../AdminComponents/admin-dashboard-comp
 import { AdminLoginComponent } from '../AdminComponents/admin-login-component/admin-login-component';
 import { AdminDoctorsComponent } from '../AdminComponents/doctor-component/doctor-component';
 import { EditDoctorComponent } from '../AdminComponents/edit-doctor/edit-doctor';
+import { AnalyticsComponent } from '../AdminComponents/analytics-component/analytics-component';
 // import { EditDoctorsComponent } from '../DoctorComponents/edit-doctors-component/edit-doctors-component';
 
 export const routes: Routes = [
@@ -14,6 +15,7 @@ export const routes: Routes = [
     { path: 'admin/departments', component: DepartmentComponent },
     { path: 'admin/doctors', component: AdminDoctorsComponent },
     { path: 'admin/doctors/edit/:id', component: EditDoctorComponent },
+    { path: 'admin/analytics', component: AnalyticsComponent },
     { path: 'admin/dashboard',component: AdminDashboardComponent},
     { path: 'admin/login',component: AdminLoginComponent},
     // {

@@ -1,0 +1,184 @@
+<div class="analytics-page">
+  <section class="page-top">
+    <div class="page-heading">
+      <span class="badge">Analytics</span>
+      <h1>Live Health Insights</h1>
+      <p>
+        Explore department, doctor and appointment trends with fast filters for
+        doctor, department and appointment dates.
+      </p>
+    </div>
+  </section>
+
+  <section class="filter-panel">
+    <label>
+      Department
+      <select [(ngModel)]="selectedDepartment" (change)="onDepartmentChange()">
+        <option *ngFor="let dept of departmentOptions" [value]="dept">{{ dept }}</option>
+      </select>
+    </label>
+
+    <label>
+      Doctor
+      <select [(ngModel)]="selectedDoctor" (change)="updateFilters()">
+        <option *ngFor="let option of doctorOptions" [value]="option.value">{{ option.label }}</option>
+      </select>
+    </label>
+
+    <label>
+      From
+      <input type="date" [(ngModel)]="dateFrom" (change)="updateFilters()" />
+    </label>
+
+    <label>
+      To
+      <input type="date" [(ngModel)]="dateTo" (change)="updateFilters()" />
+    </label>
+  </section>
+
+  <div *ngIf="isLoading" class="loading-card">
+    <div class="spinner"></div>
+    Loading analytics data...
+  </div>
+
+  <div *ngIf="errorMessage && !isLoading" class="error-card">
+    {{ errorMessage }}
+  </div>
+
+  <section class="summary-grid" *ngIf="!isLoading && !errorMessage">
+    <article class="summary-card">
+      <span class="summary-label">Appointments</span>
+      <strong>{{ filteredAppointments.length }}</strong>
+      <p>Filtered appointment records</p>
+    </article>
+
+    <article class="summary-card">
+      <span class="summary-label">Doctors</span>
+      <strong>{{ totalDoctors }}</strong>
+      <p>Total doctors in the system</p>
+    </article>
+
+    <article class="summary-card">
+      <span class="summary-label">Departments</span>
+      <strong>{{ totalDepartments }}</strong>
+      <p>Active clinical departments</p>
+    </article>
+  </section>
+
+  <section class="chart-grid" *ngIf="!isLoading && !errorMessage">
+    <article class="chart-card wide-card">
+      <div class="chart-header">
+        <h2>Appointment Status</h2>
+        <p>Pending, confirmed, completed and cancelled distribution.</p>
+      </div>
+      <div class="bar-chart">
+        <div
+          *ngFor="let item of appointmentStatusData; let idx = index"
+          class="bar-row"
+        >
+          <div class="bar-meta">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+          </div>
+          <div class="bar-track">
+            <div
+              class="bar-fill"
+              [style.width.%]="item.percentage"
+              [style.background]="item.color"
+            ></div>
+          </div>
+          <span class="bar-percent">{{ item.percentage }}%</span>
+        </div>
+      </div>
+    </article>
+    <article class="chart-card">
+      <div class="chart-header">
+        <h2>Priority Levels</h2>
+        <p>How many appointments need urgent review.</p>
+      </div>
+      <div class="small-bar-chart">
+        <div *ngFor="let item of appointmentPriorityData" class="small-bar-row">
+          <span>{{ item.label }}</span>
+          <div class="small-bar-track">
+            <div class="small-bar-fill" [style.width.%]="(item.value / (filteredAppointments.length || 1)) * 100" [style.background]="item.color"></div>
+          </div>
+          <strong>{{ item.value }}</strong>
+        </div>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <div class="chart-header">
+        <h2>Doctor Appointments</h2>
+        <p>Top doctors by scheduled appointment count.</p>
+      </div>
+      <div class="horizontal-bar-list">
+        <div *ngFor="let item of appointmentsByDoctorData" class="horizontal-bar-row">
+          <span>{{ item.label }}</span>
+          <div class="hbar-track">
+            <div class="hbar-fill" [style.width.%]="(item.value / (appointmentsByDoctorData[0].value || 1)) * 100" [style.background]="item.color"></div>
+          </div>
+          <strong>{{ item.value }}</strong>
+        </div>
+      </div>
+    </article>
+
+    <!-- FIX 1 & 2: Replaced Math.max(...spread) with component helper methods -->
+    <article class="chart-card line-card">
+      <div class="chart-header">
+        <h2>Appointment Trend</h2>
+        <p>Daily appointment volume over the selected window.</p>
+      </div>
+      <div class="line-chart" *ngIf="appointmentTrendData.length; else noTrend">
+        <svg viewBox="0 0 260 120" preserveAspectRatio="none">
+          <path [attr.d]="lineChartPath" fill="none" stroke="#1F4E79" stroke-width="3"></path>
+          <polyline [attr.points]="lineChartPoints" fill="none" stroke="#6FA3D8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+          <g *ngFor="let label of lineLabels; let i = index">
+            <circle
+              [attr.cx]="getLineCx(i)"
+              [attr.cy]="getLinePointCy(appointmentTrendData[i].value, getMaxValue(appointmentTrendData))"
+              r="4"
+              fill="#3B7A99"
+            ></circle>
+          </g>
+        </svg>
+        <div class="axis-labels">
+          <span *ngFor="let label of lineLabels" class="axis-label">{{ label }}</span>
+        </div>
+      </div>
+      <ng-template #noTrend>
+        <div class="empty-chart">No appointment trend data for selected filters.</div>
+      </ng-template>
+    </article>
+
+    <!-- FIX 3: Replaced Math.max(...spread) with component helper method -->
+    <article class="chart-card">
+      <div class="chart-header">
+        <h2>Doctor Specialties</h2>
+        <p>Count of doctors grouped by specialty.</p>
+      </div>
+      <div class="tiny-bar-list">
+        <div *ngFor="let item of doctorSpecialtyData" class="tiny-bar-row">
+          <span>{{ item.label }}</span>
+          <div class="tiny-bar-track">
+            <div class="tiny-bar-fill" [style.width.%]="getBarWidth(item.value, getMaxValue(doctorSpecialtyData))" [style.background]="item.color"></div>
+          </div>
+          <strong>{{ item.value }}</strong>
+        </div>
+      </div>
+    </article>
+
+    <article class="chart-card">
+      <div class="chart-header">
+        <h2>Services by Department</h2>
+        <p>Service count inside each department.</p>
+      </div>
+      <div class="service-list">
+        <div *ngFor="let item of departmentServiceData" class="service-item">
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}</strong>
+        </div>
+      </div>
+    </article>
+  </section>
+</div>
