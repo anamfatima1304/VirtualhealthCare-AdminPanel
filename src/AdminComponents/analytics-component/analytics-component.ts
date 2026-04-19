@@ -253,6 +253,26 @@ export class AnalyticsComponent implements OnInit {
     }));
   }
 
+  get appointmentsBySpecialtyData(): Array<{ label: string; value: number; percentage: number; color: string }> {
+    const counts = this.filteredAppointments.reduce((acc, appointment) => {
+      const doctor = this.doctors.find(doc => doc.id === appointment.doctorId);
+      const specialty = doctor ? doctor.specialty : 'Unknown';
+      acc[specialty] = (acc[specialty] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, value], index) => ({
+        label,
+        value,
+        percentage: this.getPercentage(value, total),
+        color: this.chartColors[index % this.chartColors.length]
+      }));
+  }
+
   get appointmentTrendData(): Array<{ label: string; value: number }> {
     const counts = this.filteredAppointments.reduce((acc, appointment) => {
       const dateKey = new Date(appointment.appointmentDate).toISOString().slice(0, 10);

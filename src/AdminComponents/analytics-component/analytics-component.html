@@ -180,5 +180,24 @@
         </div>
       </div>
     </article>
+
+    <article class="chart-card wide-card">
+      <div class="chart-header">
+        <h2>Appointments by Specialty</h2>
+        <p>Distribution of scheduled appointments across all medical specialties.</p>
+      </div>
+      <div class="bar-chart">
+        <div *ngFor="let item of appointmentsBySpecialtyData" class="bar-row">
+          <div class="bar-meta">
+            <span>{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="item.percentage" [style.background]="item.color"></div>
+          </div>
+          <span class="bar-percent">{{ item.percentage }}%</span>
+        </div>
+      </div>
+    </article>
   </section>
 </div>
