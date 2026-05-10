@@ -39,7 +39,7 @@ export class AdminLoginComponent {
   errorMessage = '';
   successMessage = '';
   
-  private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = 'http://20.13.9.186/hospital/api';
 
   constructor(
     private router: Router,

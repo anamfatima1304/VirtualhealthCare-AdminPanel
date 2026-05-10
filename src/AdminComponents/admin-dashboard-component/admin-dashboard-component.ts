@@ -53,7 +53,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   selectedFeedback: Feedback | null = null;
   showDetailModal = false;
   
-  private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = 'http://20.13.9.186/hospital/api';
   
   constructor(
     private http: HttpClient,
