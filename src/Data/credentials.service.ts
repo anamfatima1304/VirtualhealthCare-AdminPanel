@@ -28,7 +28,7 @@ export interface UpdateCredentialRequest {
   providedIn: 'root'
 })
 export class CredentialsService {
-  private apiUrl = 'http://20.13.9.186.nip.io/hospital/api/credentials';
+  private apiUrl = 'https://20-13-9-186.nip.io/hospital/api/credentials';
 
   constructor(private http: HttpClient) {}
 
