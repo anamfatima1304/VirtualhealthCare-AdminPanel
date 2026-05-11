@@ -39,7 +39,7 @@ export class AdminLoginComponent {
   errorMessage = '';
   successMessage = '';
   
-  private apiUrl = 'http://20.13.9.186/hospital/api';
+  private apiUrl = 'http://20.13.9.186.nip.io/hospital/api';
 
   constructor(
     private router: Router,
