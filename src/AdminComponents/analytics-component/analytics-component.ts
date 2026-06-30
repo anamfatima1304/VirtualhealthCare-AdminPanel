@@ -66,7 +66,8 @@ export class AnalyticsComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  readonly apiUrl = 'https://20-13-9-186.nip.io/hospital/api';
+  // readonly apiUrl = 'https://20-13-9-186.nip.io/hospital/api';
+  readonly apiUrl = 'http://localhost:3000/api';
   readonly chartColors = ['#1F4E79', '#3B7A99', '#6FA3D8', '#A4C8E1', '#729FD6', '#294B78'];
 
   constructor(private http: HttpClient) {}
